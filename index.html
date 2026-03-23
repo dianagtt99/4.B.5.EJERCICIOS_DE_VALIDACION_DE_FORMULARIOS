@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Validaciones y Pedido. Ej1</title>
+    <style>
+        form {
+            margin-bottom: 20px;
+        }
+        img {
+            width: 250px;
+            height: 250px;
+            object-fit: contain;   
+            display: block;        
+            margin: 0 auto;        
+            border: 1px solid #ccc;
+            background-color: #fff; 
+        }
+
+        h3 {
+            color: red;
+        }
+        ul {
+            margin-top: 20px;
+        }
+        li {
+            margin: 6px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Pedido</h1>
+
+    <!-- Hacemos nuestro formulario con las opciones de  pedido -->
+    <form id="formPedido">
+        <label for="producto">Producto:</label>
+        <select id="producto">
+            <option value="">Elija producto</option>
+            <option value="ordenador">Ordenador</option>
+            <option value="portatil">Portátil</option>
+            <option value="tablet">Tablet</option>
+        </select>
+
+        <br><br>
+    <!-- Para permitir cambiar la imagen según la selección -->
+        <img id="imagenProducto" src="" alt="Imagen del producto">
+
+        <br><br>
+    <!-- Para los datos del usuario -->
+        <label for="usuario">Usuario:</label>
+        <input type="text" id="usuario">
+
+        <br><br>
+
+        <label>
+    <!-- Una checkbox -->
+            <input type="checkbox" id="condiciones">
+            He leído y acepto las condiciones
+        </label>
+
+        <br><br>
+    <!-- Botón de envío -->
+        <button type="submit">Enviar</button>
+    </form>
+    <!-- Elaboramos el mensaje de error, en lugar de un alert -->
+    <h3 id="errores"></h3>
+
+    <!-- Nuestra lista de pedidos -->
+    <h2>Historial de pedidos</h2>
+    <ul id="listaPedidos"></ul>
+
+    <!-- Para crear elementos repetidos. No se mostrará.-->
+    <template id="tplPedido">
+        <li class="pedido">
+            <b>Producto:</b> <span class="prod"></span> — 
+            <b>Usuario:</b> <span class="user"></span>
+        </li>
+    </template>
+
+    <script>
+    // Elementos DOM
+        const selectProducto = document.getElementById("producto");
+        const imagen = document.getElementById("imagenProducto");
+        const form = document.getElementById("formPedido");
+        const errores = document.getElementById("errores");
+
+        const listaPedidos = document.getElementById("listaPedidos");
+        const tpl = document.getElementById("tplPedido").content;
+
+        // Array donde guardaremos nuestros pedidos
+        let pedidos = [];
+
+        // Asignamos a cada opción su imagen correspondiente
+        const imagenes = {
+            ordenador: "setupMesa.jpg",
+            portatil: "portatil.jpg",
+            tablet: "tablet.jpg"
+        };
+
+        //Cambiamos la imagen según la selección del producto.
+        selectProducto.addEventListener("change", () => {
+            const valor = selectProducto.value;
+            imagen.src = imagenes[valor] || "";
+        });
+
+        // Validación y añadir pedido a la array, mostrando errores si los hay.
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            errores.textContent = "";
+
+            const usuario = document.getElementById("usuario");
+            const condiciones = document.getElementById("condiciones");
+
+            // Validamos el producto
+            if (selectProducto.value === "") {
+                errores.textContent = "Debe elegir un producto.";
+                selectProducto.focus();
+                return;
+            }
+
+            // Validamos usuario
+            if (usuario.value.length < 5) {
+                errores.textContent = "El usuario debe tener al menos 5 caracteres.";
+                usuario.focus();
+                return;
+            }
+
+            // Validamos checkbox
+            if (!condiciones.checked) {
+                errores.textContent = "Debe aceptar las condiciones.";
+                condiciones.focus();
+                return;
+            }
+
+            // Crear objeto pedido como JSON
+            const nuevoPedido = {
+                producto: selectProducto.value,
+                usuario: usuario.value
+            };
+
+            // .some() → comprueba si existe un pedido igual
+            if (pedidos.some(p => p.producto === nuevoPedido.producto && p.usuario === nuevoPedido.usuario)) {
+                errores.textContent = "Este pedido ya existe.";
+                return;
+            }
+
+            // Añadimos al array con .push()
+            pedidos.push(nuevoPedido);
+
+            // Limpiar lista antes de volver a hacer otra
+            listaPedidos.innerHTML = "";
+
+            // Crear fragment para optimizar
+            let fragment = document.createDocumentFragment();
+
+            // .forEach() → para recorrer pedidos
+            pedidos.forEach(p => {
+                let clon = tpl.cloneNode(true);
+                clon.querySelector(".prod").textContent = p.producto;
+                clon.querySelector(".user").textContent = p.usuario;
+                fragment.appendChild(clon);
+            });
+
+            // .map() → transformar pedidos en texto (solo demostración)
+            console.log("Pedidos en texto:", pedidos.map(p => `${p.usuario} pidió ${p.producto}`));
+
+            // .find() → buscar un pedido por usuario
+            const encontrado = pedidos.find(p => p.usuario === usuario.value);
+            console.log("Pedido encontrado del usuario:", encontrado);
+
+            // Insertar en el DOM
+            listaPedidos.appendChild(fragment);
+
+            errores.style.color = "green";
+            errores.textContent = "Formulario enviado correctamente.";
+        });
+    </script>
+
+</body>
+</html>
